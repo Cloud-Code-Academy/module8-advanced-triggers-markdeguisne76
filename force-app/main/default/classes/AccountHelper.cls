@@ -28,19 +28,52 @@ Always ensure that your helper methods are bulk-safe to handle multiple records 
 */
 public with sharing class AccountHelper {
     
-    public void setTypeProspect(SObject objects){
-
+    public static void setTypeProspect(List<Account> accounts){
+        for (Account acct : accounts) {
+            if (String.isBlank(acct.Type)) {
+                acct.Type = 'Prospect';
+            }
+        }
     }
 
-    void addressCopy(){
-
+    public static void addressCopy(List<Account> accounts){
+        for (Account acct : accounts) {
+            if (String.isBlank(acct.BillingStreet) && !String.isBlank(acct.ShippingStreet)) {
+                acct.BillingStreet     = acct.ShippingStreet;
+                acct.BillingCity       = acct.ShippingCity;
+                acct.BillingState      = acct.ShippingState;
+                acct.BillingPostalCode = acct.ShippingPostalCode;
+                acct.BillingCountry    = acct.ShippingCountry;
+            }
+        }
     }
 
-    //[public | private ] [static] data_type setRating (input parameters) {
-    //  The body of the method
-    //}
+    // When an account is inserted set the rating to 'Hot' if the Phone, Website, and Fax is not empty.
 
-    //[public | private ] [static] data_type defaultContact (input parameters) {
-    //  The body of the method
-    //}
+    public static void setRating(List<Account> accounts) {
+        for (Account acct : accounts) {
+            if (!String.isBlank(acct.Phone) && 
+                !String.isBlank(acct.Website) && 
+                !String.isBlank(acct.Fax)) {
+                acct.Rating = 'Hot';
+            }
+        }
+    }
+
+    // * When an account is inserted create a contact related to the account with the following default values:
+    // * LastName = 'DefaultContact'
+    // * Email = 'default@email.com'
+    // * Trigger should only fire on insert.
+
+    public static void defaultContact (List<Account> accounts) {
+        List<Contact> contacts = new List<Contact>();   
+        for(Account acc : accounts){
+            Contact con = new Contact();
+            con.LastName = 'DefaultContact';
+            con.Email = 'default@email.com';
+            con.AccountId = acc.Id;
+            contacts.add(con);
+        }
+        insert contacts; 
+    }
 }
